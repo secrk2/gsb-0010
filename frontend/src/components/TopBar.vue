@@ -6,6 +6,7 @@
         <router-link to="/" exact-active-class="active">案件作战台</router-link>
         <router-link to="/clients" active-class="active">委托与客户</router-link>
         <router-link to="/cases" active-class="active">案件</router-link>
+        <router-link to="/calendar" active-class="active">官文日历</router-link>
         <router-link v-if="canSeeLogs" to="/logs" active-class="active">留痕</router-link>
       </nav>
       <div class="user-chip">

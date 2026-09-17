@@ -3,7 +3,10 @@ import { ApiError } from '../middleware/error.js'
 import { assertClientAccess } from '../middleware/auth.js'
 import { checkTransition, allowedTransitionsFor } from '../lib/stateMachine.js'
 import { isFirmRole } from '../lib/mask.js'
-import { nowIso } from '../lib/dates.js'
+import { nowIso, tzToday, daysBetween } from '../lib/dates.js'
+import { stageCompletion, docCompletion } from '../lib/completion.js'
+import { config } from '../config.js'
+import { listDocsForCase } from './docService.js'
 import { bumpDash } from './dashboardService.js'
 
 function presentCase(r, user) {
@@ -32,6 +35,13 @@ const CASE_SELECT = `SELECT c.*, cl.name AS client_name, cl.code AS client_code,
                      u.name AS agent_name
                      FROM cases c JOIN clients cl ON cl.id = c.client_id LEFT JOIN users u ON u.id = c.agent_id`
 
+// 轻量访问校验（官文清单等只需要确认案件可见的接口复用）
+export async function assertCaseAccess(user, caseId) {
+  const rows = await query('SELECT client_id FROM cases WHERE id = ?', [caseId])
+  if (!rows.length) throw new ApiError(404, 'NOT_FOUND', '案件不存在')
+  assertClientAccess(user, rows[0].client_id)
+}
+
 export async function listCases(user, { status, client_id, mine } = {}) {
   const conds = []
   const params = []
@@ -55,23 +65,45 @@ export async function listCases(user, { status, client_id, mine } = {}) {
   return rows.map((r) => presentCase(r, user))
 }
 
+// 剩余天数等派生字段一律按代理所时区今日计算
+function decorateDeadline(d, t) {
+  return {
+    ...d,
+    rolled: Boolean(d.rolled),
+    overdue: d.status === '待处理' && d.due_date < t,
+    days_left: d.status === '待处理' ? daysBetween(t, d.due_date) : null,
+  }
+}
+
 export async function getCaseDetail(user, caseId) {
   const rows = await query(`${CASE_SELECT} WHERE c.id = ?`, [caseId])
   if (!rows.length) throw new ApiError(404, 'NOT_FOUND', '案件不存在')
   const c = rows[0]
   assertClientAccess(user, c.client_id)
+  const t = tzToday(config.firmTz)
   const events = await query('SELECT * FROM case_events WHERE case_id = ? ORDER BY id ASC', [caseId])
   const deadlines = await query('SELECT * FROM deadlines WHERE case_id = ? ORDER BY due_date ASC', [caseId])
   const fees = await query('SELECT * FROM fees WHERE case_id = ? ORDER BY due_date ASC', [caseId])
   const contracts = await query('SELECT id, contract_no, title, status, signed_at FROM contracts WHERE client_id = ?', [c.client_id])
+  const docs = await listDocsForCase(caseId)
   const isAssignee = c.agent_id === user.id
+  // 完成度两口径：同一来源 lib/completion.js，作战台/导出复用
+  const reached = new Set(events.map((e) => e.to_status))
+  const completion = {
+    server_today: t,
+    firm_tz: config.firmTz,
+    stage: stageCompletion(c.ctype, reached),
+    doc: docCompletion(docs),
+  }
   return {
     ...presentCase(c, user),
     contract_no: contracts[0]?.contract_no || null,
     events,
-    deadlines: deadlines.map((d) => ({ ...d, overdue: d.status === '待处理' && d.due_date < nowIso().slice(0, 10) })),
-    fees: fees.map((f) => ({ ...f, amount: Number(f.amount), overdue: f.status === '待缴' && f.due_date < nowIso().slice(0, 10) })),
-    allowed_transitions: allowedTransitionsFor(c.status, user.role, isAssignee),
+    docs,
+    completion,
+    deadlines: deadlines.map((d) => decorateDeadline(d, t)),
+    fees: fees.map((f) => ({ ...f, amount: Number(f.amount), overdue: f.status === '待缴' && f.due_date < t })),
+    allowed_transitions: allowedTransitionsFor(c.status, user.role, isAssignee, c.ctype),
     can_reveal: isFirmRole(user.role) && c.status !== '委托中',
   }
 }
@@ -117,7 +149,7 @@ export async function createCase(user, payload) {
   }
 }
 
-// 状态流转：状态机统一校验（非法回退/跳级/越权均带原因拦截）
+// 状态流转：状态机统一校验（非法回退/跳步/越权均带原因拦截）
 export async function transitionCase(user, caseId, { to, reason = '', agent_id = null } = {}) {
   const rows = await query('SELECT * FROM cases WHERE id = ?', [caseId])
   if (!rows.length) throw new ApiError(404, 'NOT_FOUND', '案件不存在')
@@ -131,6 +163,7 @@ export async function transitionCase(user, caseId, { to, reason = '', agent_id =
     isAssignee: c.agent_id === user.id,
     hasContract: signed.length > 0,
     hasAgent: Boolean(agent_id || c.agent_id),
+    ctype: c.ctype,
   })
   if (!chk.ok) throw new ApiError(chk.http, chk.code, chk.message)
   if (chk.noop) return { case: await getCaseDetail(user, caseId), noop: true }

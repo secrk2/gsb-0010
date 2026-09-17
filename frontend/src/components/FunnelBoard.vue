@@ -25,7 +25,7 @@
         </div>
       </div>
       <div class="small muted mt8">
-        已结案：授权 {{ f.by_status['授权'] || 0 }} · 驳回 {{ f.by_status['驳回'] || 0 }}
+        已结案：授权 {{ f.by_status['授权'] || 0 }} · 驳回 {{ f.by_status['驳回'] || 0 }} · 无效 {{ f.by_status['无效'] || 0 }}
       </div>
     </div>
     <p v-if="!funnels.length" class="muted">暂无客户数据</p>
@@ -34,5 +34,6 @@
 
 <script setup>
 defineProps({ funnels: { type: Array, default: () => [] } })
-const segments = ['委托中', '已立项', '实审中', '复审中']
+// 七段在办（委托/立项/申请/受理/初审/实审/复审）；授权/驳回/无效为结案，在底部计数
+const segments = ['委托中', '已立项', '申请', '受理', '初审', '实审中', '复审中']
 </script>

@@ -62,7 +62,7 @@ import { fmtDate, fmtDateTime } from '../utils.js'
 import StatusBadge from '../components/StatusBadge.vue'
 import ErrorState from '../components/ErrorState.vue'
 
-const statusFilters = ['全部', '委托中', '已立项', '实审中', '复审中', '授权', '驳回']
+const statusFilters = ['全部', '委托中', '已立项', '申请', '受理', '初审', '实审中', '复审中', '授权', '驳回', '无效']
 const activeStatus = ref('全部')
 const mineOnly = ref(false)
 const cases = ref([])

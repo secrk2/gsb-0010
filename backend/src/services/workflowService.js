@@ -1,7 +1,9 @@
 import { query, insert } from '../db.js'
 import { ApiError } from '../middleware/error.js'
 import { assertClientAccess } from '../middleware/auth.js'
-import { nowIso } from '../lib/dates.js'
+import { nowIso, tzToday } from '../lib/dates.js'
+import { DAY_BASES, ANCHORS } from '../lib/deadlineCalc.js'
+import { config } from '../config.js'
 import { bumpDash } from './dashboardService.js'
 
 async function loadCaseForWrite(user, caseId) {
@@ -11,17 +13,34 @@ async function loadCaseForWrite(user, caseId) {
   return rows[0]
 }
 
-export async function addDeadline(user, caseId, { dtype, due_date, note = '' } = {}) {
+// 手工登记期限（不经官文）。落点已逾期时必须二次确认 + 填原因留痕。
+export async function addDeadline(user, caseId, body = {}) {
+  const {
+    dtype, due_date, note = '',
+    anchor_basis: anchor = 'receive', day_basis: basis = 'natural',
+    start_date: startDate = null, duration_days: durationDays = null,
+    confirm_overdue: confirmOverdue = false, overdue_reason: overdueReason = '',
+  } = body
   if (!dtype || !due_date) throw new ApiError(400, 'BAD_REQUEST', '缺少必填字段：dtype / due_date')
+  if (!ANCHORS.includes(anchor) || !DAY_BASES.includes(basis)) {
+    throw new ApiError(400, 'BAD_REQUEST', '期限口径不合法：anchor_basis / day_basis')
+  }
   await loadCaseForWrite(user, caseId)
-  const id = await insert('INSERT INTO deadlines (case_id, dtype, due_date, status, note, created_at) VALUES (?,?,?,?,?,?)', [
-    caseId,
-    dtype,
-    due_date,
-    '待处理',
-    note,
-    nowIso(),
-  ])
+  const t = tzToday(config.firmTz)
+  if (due_date < t) {
+    if (!confirmOverdue) {
+      throw new ApiError(409, 'OVERDUE_CONFIRM', `到期日 ${due_date} 早于代理所今日（${t}），该期限登记即超期。请确认并填写超期补登原因后再提交。`)
+    }
+    if (!overdueReason || String(overdueReason).trim().length < 2) {
+      throw new ApiError(400, 'OVERDUE_REASON_REQUIRED', '超期补登必须填写原因（不少于 2 个字），留痕备查。')
+    }
+  }
+  const id = await insert(
+    `INSERT INTO deadlines (case_id, doc_id, dtype, anchor_basis, day_basis, start_date, duration_days, due_date, rolled, status, note, overdue_reason, created_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [caseId, null, dtype, anchor, basis, startDate, durationDays == null ? null : Math.trunc(Number(durationDays)),
+     due_date, 0, '待处理', note, due_date < t ? String(overdueReason).trim() : '', nowIso()]
+  )
   await bumpDash()
   return { id }
 }

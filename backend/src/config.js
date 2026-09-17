@@ -16,4 +16,7 @@ export const config = {
   tokenTtlSec: Number(process.env.TOKEN_TTL_SEC || 12 * 3600),
   seedOnBoot: process.env.SEED_ON_BOOT !== 'false',
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS || 10),
+  // 代理所所在地时区：期限日期按此时区解释「今天/剩几天/是否逾期」。
+  // 存储一律 UTC/日历日字符串，跨时区展示由前端按此时区换算。
+  firmTz: process.env.FIRM_TZ || 'Asia/Shanghai',
 }

@@ -50,6 +50,8 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-patent-cloud-dev-secret-change-me}
       SEED_ON_BOOT: "true"
+      FIRM_TZ: ${FIRM_TZ:-Asia/Shanghai}
+      TZ: Asia/Shanghai
     ports:
       - "7103:7103"
     depends_on:

@@ -4,6 +4,7 @@ import { asyncH } from '../middleware/error.js'
 import { requireRole } from '../middleware/auth.js'
 import { createCase, transitionCase } from '../services/caseService.js'
 import { completeDeadline, payFee } from '../services/workflowService.js'
+import { registerDoc, archiveDoc, withdrawDoc } from '../services/docService.js'
 
 const router = Router()
 
@@ -56,6 +57,20 @@ async function applyOp(user, op) {
         out = { status: 'applied', data: { id: Number(payload.id) } }
         break
       }
+      case 'doc.register': {
+        out = await syncDocRegister(user, payload)
+        break
+      }
+      case 'doc.archive': {
+        await archiveDoc(user, Number(payload.id))
+        out = { status: 'applied', data: { id: Number(payload.id) } }
+        break
+      }
+      case 'doc.withdraw': {
+        await withdrawDoc(user, Number(payload.id), { reason: payload.reason })
+        out = { status: 'applied', data: { id: Number(payload.id) } }
+        break
+      }
       default:
         out = { status: 'error', code: 'UNKNOWN_OP', message: `未知操作类型：${type}` }
     }
@@ -74,9 +89,25 @@ async function syncTransition(user, payload) {
     const r = await transitionCase(user, Number(case_id), { to, reason, agent_id })
     return { status: r.noop ? 'duplicate' : 'applied', data: { case_id: Number(case_id), status: r.case.status } }
   } catch (e) {
-    if (e.code === 'ILLEGAL_ROLLBACK' || e.code === 'ILLEGAL_TRANSITION' || e.code === 'NOT_ASSIGNEE' || e.code === 'ROLE_DENIED') {
+    if (e.code === 'ILLEGAL_ROLLBACK' || e.code === 'ILLEGAL_TRANSITION' || e.code === 'NOT_ASSIGNEE' || e.code === 'ROLE_DENIED' || e.code === 'CTYPE_PATH_MISMATCH') {
       // 与服务器现状冲突：不强行应用，带回当前状态由前端提示人工处理
       return { status: 'conflict', code: e.code, message: e.message }
+    }
+    throw e
+  }
+}
+
+async function syncDocRegister(user, payload) {
+  try {
+    const r = await registerDoc(user, Number(payload.case_id), payload.body || {})
+    return {
+      status: 'applied',
+      data: { id: r.id, deadline_id: r.deadline_id, case_status: r.case_status, transitioned: r.transitioned || null },
+    }
+  } catch (e) {
+    // 官文驱动的流转与服务器现状冲突，或落点逾期未二次确认：交回前端人工处理，不丢操作
+    if (['ILLEGAL_ROLLBACK', 'ILLEGAL_TRANSITION', 'NOT_ASSIGNEE', 'ROLE_DENIED', 'CTYPE_PATH_MISMATCH', 'OVERDUE_CONFIRM', 'OVERDUE_REASON_REQUIRED'].includes(e.code)) {
+      return { status: 'conflict', code: e.code, message: e.message, details: e.details }
     }
     throw e
   }

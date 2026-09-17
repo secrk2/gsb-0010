@@ -3,10 +3,11 @@ import * as off from './offline.js'
 import { uuid } from './utils.js'
 
 export class ApiError extends Error {
-  constructor(status, code, message) {
+  constructor(status, code, message, details) {
     super(message)
     this.status = status
     this.code = code
+    this.details = details
   }
 }
 
@@ -32,7 +33,7 @@ async function raw(method, path, body, headers = {}) {
     throw new ApiError(401, 'UNAUTHORIZED', '登录已过期，请重新登录')
   }
   if (!resp.ok) {
-    throw new ApiError(resp.status, json?.error?.code || 'ERROR', json?.error?.message || `请求失败（${resp.status}）`)
+    throw new ApiError(resp.status, json?.error?.code || 'ERROR', json?.error?.message || `请求失败（${resp.status}）`, json?.error?.details)
   }
   return { data: json?.data, headers: resp.headers }
 }
@@ -107,4 +108,20 @@ export async function logout() {
     await raw('POST', '/auth/logout')
   } catch {}
   store.logout()
+}
+
+// 带认证的文件下载（CSV 导出）：拿到文本后由调用方触发浏览器保存
+export async function downloadText(path, filename) {
+  const resp = await fetch(`/api${path}`, { headers: { Authorization: `Bearer ${store.token}` } })
+  if (!resp.ok) throw new ApiError(resp.status, 'DOWNLOAD_FAILED', `导出失败（${resp.status}）`)
+  const text = await resp.text()
+  const blob = new Blob([text], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
 }
