@@ -34,9 +34,9 @@ test('客户管理员看本客户始终明文', () => {
   assert.equal(r.masked, false)
 })
 
-test('案件维度：委托中明文，立项后脱敏', () => {
+test('案件维度：申请态明文，受理后脱敏', () => {
   const firm = { role: 'reviewer' }
-  assert.equal(maskCaseClientName({ status: '委托中' }, client, firm).name, client.name)
-  assert.equal(maskCaseClientName({ status: '实审中' }, client, firm).name, 'HX·KH-0001')
-  assert.equal(maskCaseClientName({ status: '实审中' }, client, { role: 'client_admin' }).name, client.name)
+  assert.equal(maskCaseClientName({ status: '申请' }, client, firm).name, client.name)
+  assert.equal(maskCaseClientName({ status: '实审' }, client, firm).name, 'HX·KH-0001')
+  assert.equal(maskCaseClientName({ status: '实审' }, client, { role: 'client_admin' }).name, client.name)
 })

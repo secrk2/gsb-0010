@@ -124,10 +124,12 @@ button { font-family: inherit; }
 .chip.blue { background: var(--blue-bg); color: var(--brand); }
 .chip.purple { background: var(--purple-bg); color: var(--purple); }
 
-.st-委托中 { background: var(--gray-bg); color: #475467; }
-.st-已立项 { background: var(--blue-bg); color: var(--brand); }
-.st-实审中 { background: var(--warn-bg); color: var(--warn); }
-.st-复审中 { background: var(--purple-bg); color: var(--purple); }
+.st-申请 { background: var(--gray-bg); color: #475467; }
+.st-受理 { background: var(--blue-bg); color: var(--brand); }
+.st-初审 { background: #e0f2fe; color: #0369a1; }
+.st-实审 { background: var(--warn-bg); color: var(--warn); }
+.st-复审 { background: var(--purple-bg); color: var(--purple); }
+.st-无效 { background: #ffe4e6; color: #be123c; }
 .st-授权 { background: var(--ok-bg); color: var(--ok); }
 .st-驳回 { background: var(--bad-bg); color: var(--bad); }
 
@@ -163,10 +165,16 @@ button { font-family: inherit; }
   transition: flex-grow 0.3s;
 }
 .fseg.empty { background: var(--gray-bg); color: var(--muted); }
-.fseg.s-委托中 { background: #98a2b3; }
-.fseg.s-已立项 { background: #2f6bc4; }
-.fseg.s-实审中 { background: #d97706; }
-.fseg.s-复审中 { background: #7c3aed; }
+.fseg.s-申请 { background: #98a2b3; }
+.fseg.s-受理 { background: #2f6bc4; }
+.fseg.s-初审 { background: #0284c7; }
+.fseg.s-实审 { background: #d97706; }
+.fseg.s-复审 { background: #7c3aed; }
+.fseg.s-无效 { background: #be123c; }
+.fseg.s-授权 { background: #15803d; }
+.fseg.s-驳回 { background: #b91c1c; }
+.funnel-8 { flex-wrap: wrap; row-gap: 4px; }
+.funnel-8 .fseg { flex-basis: 60px; }
 
 /* ---------- 表格（移动端转卡片） ---------- */
 .rtable { width: 100%; border-collapse: collapse; }
@@ -333,4 +341,92 @@ button { font-family: inherit; }
   .rtable td.no-label::before { content: none; }
   .kpi .num { font-size: 22px; }
   .steps .step { font-size: 12px; }
+}
+
+/* ---------- 官文与期限日历 ---------- */
+.cal-meta { padding: 12px 16px; }
+.case-select { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; background: #fff; max-width: 280px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: none; background: #fff; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+.seg button.on { background: var(--brand); color: #fff; }
+.range-title { min-width: 150px; text-align: center; }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-grid.week { grid-template-rows: 1fr; }
+.cal-dow { text-align: center; color: var(--muted); font-size: 12.5px; padding: 4px 0; }
+.cal-cell {
+  border: 1px solid var(--line); border-radius: 8px; min-height: 96px; padding: 5px 6px;
+  background: #fff; cursor: pointer; display: flex; flex-direction: column; gap: 3px;
+}
+.cal-cell:hover { border-color: var(--brand-2); }
+.cal-cell.muted { background: #fafbfd; }
+.cal-cell.muted .cal-dnum { color: #b6bdca; }
+.cal-cell.today { border-color: var(--brand-2); box-shadow: inset 0 0 0 1px var(--brand-2); }
+.cal-cell.selected { background: #f2f7ff; }
+.cal-dnum { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.cal-cell.today .cal-dnum { color: var(--brand); }
+.cal-items { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+.cal-chip { font-size: 11px; border-radius: 5px; padding: 1px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-chip.dl { background: var(--gray-bg); color: var(--ink); border-left: 3px solid var(--brand-2); }
+.cal-chip.dl.is-bad { background: var(--bad-bg); color: var(--bad); border-left-color: var(--bad); }
+.cal-chip.dl.is-warn { background: var(--warn-bg); color: var(--warn); border-left-color: var(--warn); }
+.cal-chip.dl.is-done { background: var(--ok-bg); color: var(--ok); border-left-color: var(--ok); }
+.cal-chip.oa { background: var(--purple-bg); color: var(--purple); }
+.day-detail { border-top: 1px solid var(--line); margin-top: 10px; }
+
+/* 平板迷你日历 */
+.cal-grid.mini .cal-cell { min-height: 56px; position: relative; }
+.cal-grid.mini .cal-items { display: none; }
+.cal-badge { position: absolute; right: 5px; bottom: 4px; background: var(--bad); color: #fff; border-radius: 999px; font-size: 10px; padding: 0 6px; }
+.cal-cell.marked { background: #f8fbff; }
+.cal-tablet { display: none; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.cal-phone { display: none; }
+.day-card .dl-item { margin-top: 8px; }
+
+/* 事项列表 */
+.deadline-list .dl-item { border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; margin-bottom: 8px; background: #fff; }
+.deadline-list .dl-item.is-oa { background: var(--purple-bg); border-color: #e3d9fb; }
+.basis-line { color: var(--muted); margin-top: 5px; line-height: 1.5; }
+.basis-tag { display: inline-block; background: var(--blue-bg); color: var(--brand); border-radius: 4px; padding: 0 5px; margin-right: 4px; font-size: 11px; }
+.overdue-reason { color: var(--bad); margin-top: 5px; background: var(--bad-bg); border-radius: 6px; padding: 5px 8px; }
+.warn-text { color: var(--warn); }
+.bad-text { color: var(--bad); }
+.brand-text { color: var(--brand); }
+
+/* 空态（三种分开，不统一「暂无数据」） */
+.empty-card { text-align: center; padding: 44px 24px; margin-top: 16px; }
+.empty-icon { font-size: 40px; }
+.empty-card h3 { margin: 10px 0 8px; }
+.withdrawn-list { text-align: left; max-width: 560px; margin: 14px auto; display: flex; flex-direction: column; gap: 10px; }
+
+/* 完成度双口径 */
+.completion { display: flex; flex-direction: column; gap: 6px; }
+.comp-bar { display: grid; grid-template-columns: 64px 1fr 46px 52px; align-items: center; gap: 8px; }
+.comp-name { font-size: 12px; color: var(--muted); }
+.bar { height: 9px; background: var(--gray-bg); border-radius: 999px; overflow: hidden; }
+.bar .fill { display: block; height: 100%; border-radius: 999px; }
+.bar .fill.doc { background: var(--brand-2); }
+.bar .fill.stage { background: var(--ok); }
+
+/* 官文登记弹窗期限模板行 */
+.dl-tpl { display: grid; grid-template-columns: minmax(130px,1.6fr) 92px 64px 64px minmax(120px,1.2fr); gap: 6px; margin-bottom: 6px; }
+.dl-tpl input, .dl-tpl select { padding: 6px 8px; font-size: 12.5px; }
+.dl-tpl-name { min-width: 0; }
+.dl-tpl-n { text-align: center; }
+
+.overdue-box .field textarea { border-color: #f0c4c4; }
+
+/* 断点一：平板（≤1024）双栏 */
+@media (max-width: 1024px) {
+  .cal-desktop { display: none; }
+  .cal-tablet { display: grid; }
+}
+/* 断点二：手机（≤640）竖向流 */
+@media (max-width: 640px) {
+  .cal-desktop, .cal-tablet { display: none; }
+  .cal-phone { display: block; }
+  .cal-meta .row { gap: 6px; }
+  .range-title { min-width: 0; flex-basis: 100%; order: 5; }
+  .comp-bar { grid-template-columns: 56px 1fr 42px 46px; }
+  .dl-tpl { grid-template-columns: 1fr 1fr; }
 }

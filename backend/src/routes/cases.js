@@ -3,6 +3,7 @@ import { asyncH } from '../middleware/error.js'
 import { requireRole } from '../middleware/auth.js'
 import { listCases, getCaseDetail, createCase, transitionCase } from '../services/caseService.js'
 import { addDeadline, addFee } from '../services/workflowService.js'
+import { registerOfficeAction, withdrawOfficeAction, listOfficeActions } from '../services/officeActionService.js'
 
 const router = Router()
 
@@ -31,7 +32,33 @@ router.get(
   })
 )
 
-// 状态流转（非法回退/跳级在此被状态机拦截并说明原因）
+// 官文列表（含派生/手工期限、撤回状态）
+router.get(
+  '/:id/office-actions',
+  asyncH(async (req, res) => {
+    res.json({ data: await listOfficeActions(req.user, Number(req.params.id)) })
+  })
+)
+
+// 登记官文：驱动状态流转 + 派生法定期限（状态机统一校验，期限引擎统一推算）
+router.post(
+  '/:id/office-actions',
+  requireRole('admin', 'agent', 'reviewer'),
+  asyncH(async (req, res) => {
+    res.status(201).json({ data: await registerOfficeAction(req.user, Number(req.params.id), req.body) })
+  })
+)
+
+// 撤回官文（原因必填、留痕；派生未完成期限作废，状态恢复到有效官文链）
+router.post(
+  '/:id/office-actions/:oaId/withdraw',
+  requireRole('admin', 'agent', 'reviewer'),
+  asyncH(async (req, res) => {
+    res.json({ data: await withdrawOfficeAction(req.user, Number(req.params.oaId), req.body || {}) })
+  })
+)
+
+// 手动状态流转（异常更正入口，仍受状态机白名单约束；正常流程一律走官文登记）
 router.post(
   '/:id/transition',
   requireRole('admin', 'agent', 'reviewer'),

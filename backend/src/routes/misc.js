@@ -6,12 +6,12 @@ import { completeDeadline, payFee } from '../services/workflowService.js'
 
 const router = Router()
 
-// 期限完成 / 费用缴纳（均为幂等操作，离线队列可安全重放）
+// 期限完成（逾期需 body.confirmed + body.reason，二次确认留痕）/ 费用缴纳（幂等）
 router.post(
   '/deadlines/:id/complete',
   requireRole('admin', 'agent', 'reviewer'),
   asyncH(async (req, res) => {
-    res.json({ data: await completeDeadline(req.user, Number(req.params.id)) })
+    res.json({ data: await completeDeadline(req.user, Number(req.params.id), req.body || {}) })
   })
 )
 
@@ -23,7 +23,7 @@ router.post(
   })
 )
 
-// 代理人名单（立项派案下拉用）
+// 代理人名单（受理派案下拉用）
 router.get(
   '/agents',
   requireRole('admin', 'agent', 'reviewer'),

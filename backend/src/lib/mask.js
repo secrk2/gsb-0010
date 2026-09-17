@@ -1,4 +1,4 @@
-// 客户名脱敏：立项后（存在非「委托中」案件）对所内人员展示为「缩写·编号」，
+// 客户名脱敏：受理立项后（存在非「申请」案件）对所内人员展示为「缩写·编号」，
 // 全称需二次确认并填写理由后单独获取，且每次查看都会留痕（见 routes/clients.js 的 reveal）。
 
 export const maskedName = (client) => `${client.short_code}·${client.code}`
@@ -27,9 +27,9 @@ export function maskClientForViewer(client, viewer, activeCaseCount) {
   }
 }
 
-// 案件维度：该案件一旦越过「委托中」即脱敏
+// 案件维度：该案件一旦受理（越过「申请」）即脱敏
 export function maskCaseClientName(caseRow, clientRow, viewer) {
   if (!isFirmRole(viewer.role)) return { name: clientRow.name, masked: false }
-  if (caseRow.status === '委托中') return { name: clientRow.name, masked: false }
+  if (caseRow.status === '申请') return { name: clientRow.name, masked: false }
   return { name: maskedName(clientRow), masked: true }
 }

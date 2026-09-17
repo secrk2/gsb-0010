@@ -24,7 +24,7 @@
         <div class="steps">
           <div class="step done">① 客户建档<div class="small muted">{{ fmtDate(detail.client.created_at) }}</div></div>
           <div class="step" :class="hasContract ? 'done' : 'current'">② 签委托合同<div class="small muted">{{ hasContract ? detail.contracts[0].contract_no : '待签订' }}</div></div>
-          <div class="step" :class="hasInitiated ? 'done' : hasContract ? 'current' : ''">③ 案件立项派代理人<div class="small muted">{{ hasInitiated ? '已立项办案' : '待立项' }}</div></div>
+          <div class="step" :class="hasInitiated ? 'done' : hasContract ? 'current' : ''">③ 受理登记派代理人<div class="small muted">{{ hasInitiated ? '已受理办案' : '待受理' }}</div></div>
         </div>
         <div class="row mt16">
           <span class="muted small">联系人：{{ detail.client.contact_name || '—' }} · {{ detail.client.contact_phone || '—' }} · {{ detail.client.contact_email || '—' }}</span>
@@ -50,7 +50,7 @@
             </tr>
           </tbody>
         </table>
-        <p v-else class="muted">尚未签订委托合同。未签约前案件不能立项（系统会拦截并提示）。</p>
+        <p v-else class="muted">尚未签订委托合同。未签约前案件不能受理（系统会拦截并提示）。</p>
       </div>
 
       <!-- 案件 -->
@@ -85,7 +85,7 @@
 
       <!-- 新建案件弹窗 -->
       <Modal v-if="showCase" title="新建委托案件" @close="showCase = false">
-        <p class="small muted" style="margin-top: 0">创建后状态为「委托中」；签约完成后方可在案件详情中立项。断网时也可创建，将自动进入待同步队列。</p>
+        <p class="small muted" style="margin-top: 0">创建后状态为「申请」；签约并指派代理人后，在案件详情登记受理通知书进入「受理」。断网时也可创建，将自动进入待同步队列。</p>
         <div class="field"><label>发明名称 *</label><input v-model="caseForm.title" placeholder="例如：一种 XXX 方法" /></div>
         <div class="field">
           <label>案件类型</label>
@@ -142,7 +142,7 @@ const caseForm = ref({ title: '', ctype: '发明', priority: '普通' })
 const caseError = ref('')
 
 const hasContract = computed(() => detail.value?.contracts?.length > 0)
-const hasInitiated = computed(() => detail.value?.cases?.some((c) => c.status !== '委托中'))
+const hasInitiated = computed(() => detail.value?.cases?.some((c) => c.status !== '申请'))
 
 async function load() {
   try {

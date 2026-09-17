@@ -1,7 +1,7 @@
 <template>
   <Modal title="查看客户全称（敏感操作）" @close="$emit('close')">
     <p class="muted small" style="margin-top: 0">
-      该客户已立项，名称按所内保密制度脱敏为「缩写·编号」。查看全称需二次确认并填写业务理由，
+      该客户已有受理案件，名称按所内保密制度脱敏为「缩写·编号」。查看全称需二次确认并填写业务理由，
       <strong style="color: var(--bad)">本次查看将全程留痕</strong>，供管理员与审核员审计。
     </p>
     <div class="field">

@@ -35,7 +35,7 @@
     <div v-else class="card" style="padding: 6px 0; margin-top: 16px">
       <table class="rtable">
         <thead>
-          <tr><th>案件号</th><th>名称</th><th>客户</th><th>类型</th><th>状态</th><th>代理人</th><th>更新</th></tr>
+          <tr><th>案件号</th><th>名称</th><th>客户</th><th>类型</th><th>状态</th><th>完成度<br/><span class="small muted">官文/阶段</span></th><th>代理人</th><th>更新</th></tr>
         </thead>
         <tbody>
           <tr v-for="c in cases" :key="c.id" @click="$router.push(`/cases/${c.id}`)">
@@ -44,10 +44,15 @@
             <td data-label="客户">{{ c.client_name }} <span v-if="c.client_masked" class="lock">🔒</span></td>
             <td data-label="类型">{{ c.ctype }}</td>
             <td data-label="状态"><StatusBadge :status="c.status" /></td>
+            <td data-label="完成度">
+              <span :class="c.completion.documents.percent >= 100 && c.completion.stages.percent <= 60 ? 'warn-text' : ''">{{ c.completion.documents.percent }}%</span>
+              / <span>{{ c.completion.stages.percent }}%</span>
+              <div class="small muted">{{ c.completion.documents.done }}/{{ c.completion.documents.total }} · {{ c.completion.stages.done }}/{{ c.completion.stages.total }}</div>
+            </td>
             <td data-label="代理人">{{ c.agent_name || '待指派' }}</td>
             <td data-label="更新">{{ fmtDate(c.updated_at) }}</td>
           </tr>
-          <tr v-if="!cases.length"><td class="muted no-label" colspan="7" style="text-align:center">没有符合条件的案件</td></tr>
+          <tr v-if="!cases.length"><td class="muted no-label" colspan="8" style="text-align:center">没有符合条件的案件</td></tr>
         </tbody>
       </table>
     </div>
@@ -62,7 +67,7 @@ import { fmtDate, fmtDateTime } from '../utils.js'
 import StatusBadge from '../components/StatusBadge.vue'
 import ErrorState from '../components/ErrorState.vue'
 
-const statusFilters = ['全部', '委托中', '已立项', '实审中', '复审中', '授权', '驳回']
+const statusFilters = ['全部', '申请', '受理', '初审', '实审', '复审', '授权', '驳回', '无效']
 const activeStatus = ref('全部')
 const mineOnly = ref(false)
 const cases = ref([])

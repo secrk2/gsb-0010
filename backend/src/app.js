@@ -11,6 +11,9 @@ import caseRoutes from './routes/cases.js'
 import miscRoutes from './routes/misc.js'
 import logRoutes from './routes/logs.js'
 import syncRoutes from './routes/sync.js'
+import calendarRoutes from './routes/calendar.js'
+import settingsRoutes from './routes/settings.js'
+import exportRoutes from './routes/export.js'
 
 export function createApp() {
   const app = express()
@@ -41,6 +44,9 @@ export function createApp() {
   app.use('/api/ops', miscRoutes)
   app.use('/api/logs', logRoutes)
   app.use('/api/sync', syncRoutes)
+  app.use('/api/calendar', calendarRoutes)
+  app.use('/api/settings', settingsRoutes)
+  app.use('/api/export', exportRoutes)
 
   app.use('/api', (_req, res) => res.status(404).json({ error: { code: 'NOT_FOUND', message: '接口不存在' } }))
   app.use(errorHandler)

@@ -2,10 +2,15 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import { router } from './router.js'
 import { store } from './store.js'
-import { flushOutbox, refreshOutboxCount } from './api.js'
+import { flushOutbox, refreshOutboxCount, get } from './api.js'
 import './styles.css'
 
 createApp(App).use(router).mount('#app')
+
+// 拉取所级设置（代理所时区等）：期限时刻按此时区展示
+if (store.token) {
+  get('/settings').then((r) => store.setSettings(r.data)).catch(() => {})
+}
 
 // 应用外壳离线可用
 if ('serviceWorker' in navigator) {

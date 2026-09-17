@@ -18,7 +18,7 @@ router.get(
       : await query('SELECT * FROM clients ORDER BY id')
     const out = []
     for (const cl of clients) {
-      const active = await query("SELECT COUNT(*) AS n FROM cases WHERE client_id = ? AND status != '委托中'", [cl.id])
+      const active = await query("SELECT COUNT(*) AS n FROM cases WHERE client_id = ? AND status != '申请'", [cl.id])
       const total = await query('SELECT COUNT(*) AS n FROM cases WHERE client_id = ?', [cl.id])
       const contracts = await query("SELECT COUNT(*) AS n FROM contracts WHERE client_id = ? AND status = '已签署'", [cl.id])
       out.push({
@@ -62,7 +62,7 @@ router.get(
     const rows = await query('SELECT * FROM clients WHERE id = ?', [id])
     if (!rows.length) throw new ApiError(404, 'NOT_FOUND', '客户不存在')
     const cl = rows[0]
-    const active = await query("SELECT COUNT(*) AS n FROM cases WHERE client_id = ? AND status != '委托中'", [id])
+    const active = await query("SELECT COUNT(*) AS n FROM cases WHERE client_id = ? AND status != '申请'", [id])
     const contracts = await query('SELECT * FROM contracts WHERE client_id = ? ORDER BY id DESC', [id])
     const cases = await query(
       `SELECT c.id, c.case_no, c.title, c.ctype, c.status, c.priority, c.updated_at, u.name AS agent_name

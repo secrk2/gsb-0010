@@ -12,7 +12,7 @@
           <span v-if="!f.overdue_fees && !f.pending_deadlines" class="chip ok">无待办</span>
         </div>
       </div>
-      <div class="funnel">
+      <div class="funnel funnel-8">
         <div
           v-for="seg in segments"
           :key="seg"
@@ -25,7 +25,7 @@
         </div>
       </div>
       <div class="small muted mt8">
-        已结案：授权 {{ f.by_status['授权'] || 0 }} · 驳回 {{ f.by_status['驳回'] || 0 }}
+        在办 {{ f.active_cases }} 件 · 结案：授权 {{ f.by_status['授权'] || 0 }} · 驳回 {{ f.by_status['驳回'] || 0 }}
       </div>
     </div>
     <p v-if="!funnels.length" class="muted">暂无客户数据</p>
@@ -34,5 +34,6 @@
 
 <script setup>
 defineProps({ funnels: { type: Array, default: () => [] } })
-const segments = ['委托中', '已立项', '实审中', '复审中']
+// 官文驱动八态（复审/无效为程序中状态，授权/驳回为结案）
+const segments = ['申请', '受理', '初审', '实审', '复审', '授权', '驳回', '无效']
 </script>
